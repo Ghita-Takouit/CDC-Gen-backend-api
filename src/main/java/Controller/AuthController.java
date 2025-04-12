@@ -22,9 +22,15 @@ public class AuthController {
             userService.registerUser(signupRequest);
             return ResponseEntity.ok(new AuthResponse(true, "User registered successfully"));
         } catch (Exception e) {
+            // Return appropriate HTTP status based on the error
+            HttpStatus status = HttpStatus.BAD_REQUEST;
+            
+            // Log the error for debugging
+            System.err.println("Error during user registration: " + e.getMessage());
+            
             return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(new AuthResponse(false, e.getMessage()));
+                    .status(status)
+                    .body(new AuthResponse(false, "Registration failed: " + e.getMessage()));
         }
     }
 }
