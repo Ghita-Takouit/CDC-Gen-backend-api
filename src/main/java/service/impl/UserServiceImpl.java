@@ -1,7 +1,13 @@
 package service.impl;
 
+import config.JwtUtils;
+import dto.LoginRequest;
 import dto.SignupRequest;
 import Models.User;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import repository.UserRepository;
@@ -13,10 +19,15 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                          AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtils = jwtUtils;
     }
 
     @Override
@@ -66,5 +77,23 @@ public class UserServiceImpl implements UserService {
 
         // Save user
         return userRepository.save(user);
+    }
+    
+    @Override
+    public String authenticateUser(LoginRequest loginRequest) throws Exception {
+        try {
+            // Use AuthenticationManager to authenticate the user
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                    loginRequest.getEmail(),
+                    loginRequest.getPassword()
+                )
+            );
+            
+            // If authentication was successful, generate a JWT token
+            return jwtUtils.generateToken(loginRequest.getEmail());
+        } catch (AuthenticationException e) {
+            throw new Exception("Invalid email or password");
+        }
     }
 }
