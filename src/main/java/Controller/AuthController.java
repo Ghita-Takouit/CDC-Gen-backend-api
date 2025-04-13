@@ -1,5 +1,6 @@
 package Controller;
 
+import dto.LoginRequest;
 import service.UserService;
 import dto.AuthResponse;
 import dto.SignupRequest;
@@ -24,6 +25,18 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
+                    .body(new AuthResponse(false, e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> loginUser(@RequestBody LoginRequest loginRequest) {
+        try {
+            String token = userService.authenticateUser(loginRequest);
+            return ResponseEntity.ok(new AuthResponse(true, "Login successful", token));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthResponse(false, e.getMessage()));
         }
     }
