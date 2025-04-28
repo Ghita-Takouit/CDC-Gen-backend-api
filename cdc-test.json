@@ -1,0 +1,70 @@
+{
+  "title": "Cahier des Charges - Système de Gestion de Projets",
+  "type": "Document technique",
+  "version": "1.0",
+  "contributors": ["Jean Dupont", "Marie Martin"],
+  
+  "pageDeGarde": {
+    "nomProjet": "ProjectFlow",
+    "nomClient": "ABC Corporation",
+    "date": "2025-04-28",
+    "versionDocument": "1.0",
+    "redacteurs": ["Jean Dupont", "Marie Martin", "Sophie Dubois"]
+  },
+  
+  "introduction": {
+    "contexteProjet": "ABC Corporation souhaite améliorer la gestion de ses projets internes et externes.",
+    "objectifGlobal": "Mettre en place un système centralisé de gestion de projets pour améliorer l'efficacité et le suivi.",
+    "presentationCommanditaire": "ABC Corporation est une entreprise de conseil informatique de 150 employés.",
+    "porteeProjet": "Le projet couvre toutes les phases de gestion d'un projet, de la planification à la clôture."
+  },
+  
+  "objectifsProjet": {
+    "objectifsFonctionnels": "1. Centraliser les données projet\n2. Améliorer le reporting\n3. Faciliter la collaboration entre équipes",
+    "objectifsNonFonctionnels": "1. Interface utilisateur intuitive\n2. Temps de réponse < 2 secondes\n3. Disponibilité 99.9%"
+  },
+  
+  "descriptionBesoin": {
+    "problemesActuels": "1. Données dispersées entre plusieurs outils\n2. Difficulté de suivi en temps réel\n3. Perte d'information lors des transitions de phase",
+    "utilisateursCibles": "Chefs de projet, membres d'équipe, direction, clients externes",
+    "besoinsExprimes": "Tableau de bord unique, alertes automatiques, partage de documents, suivi des temps et des budgets"
+  },
+  
+  "perimetreFonctionnel": {
+    "authentification": "Authentification SSO + gestion de rôles (admin, chef de projet, membre, client)",
+    "tableauBord": "Vue personnalisable par rôle avec indicateurs clés de performance",
+    "gestionUtilisateurs": "Création, modification, désactivation des comptes utilisateurs et gestion des permissions",
+    "gestionDonnees": "Stockage sécurisé des données projet avec historisation des modifications",
+    "notifications": "Système d'alerte par email et notifications in-app",
+    "autresFonctionnalites": "Extraction de rapports, intégration avec des outils existants (Slack, MS Teams)"
+  },
+  
+  "contraintesTechniques": {
+    "langagesFrameworks": "Backend: Java/Spring Boot, Frontend: React.js",
+    "baseDonnees": "PostgreSQL",
+    "hebergement": "Amazon AWS (EC2 + RDS)",
+    "securite": "Chiffrement des données sensibles, audit trail complet",
+    "compatibilite": "Navigateurs modernes (Chrome, Firefox, Safari, Edge), responsive design"
+  },
+  
+  "planningPrevisionnel": {
+    "phasesProjet": "1. Analyse (2 semaines)\n2. Conception (4 semaines)\n3. Développement (12 semaines)\n4. Tests (4 semaines)\n5. Déploiement (2 semaines)",
+    "datesCles": "Début: 15/05/2025, Livraison: 15/11/2025",
+    "dureeEstimee": "6 mois"
+  },
+  
+  "budget": {
+    "estimationCouts": "150 000 €"
+  },
+  
+  "criteresValidation": {
+    "elementsVerifier": "Fonctionnalités complètes, respect des temps de réponse, intégrité des données, sécurité",
+    "scenariosTest": "Création projet, affectation ressources, suivi avancement, génération rapports, gestion droits d'accès"
+  },
+  
+  "annexes": {
+    "glossaire": "CDC: Cahier des Charges, MVP: Minimum Viable Product, KPI: Key Performance Indicator",
+    "documentsComplementaires": "Modèles UML, maquettes d'interface utilisateur, modèle de données",
+    "referencesUtiles": "PMBOK Guide, ISO 21500 Guidelines for Project Management"
+  }
+}
