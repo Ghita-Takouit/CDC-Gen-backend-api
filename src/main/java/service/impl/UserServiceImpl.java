@@ -3,6 +3,7 @@ package service.impl;
 import config.JwtUtils;
 import dto.LoginRequest;
 import dto.SignupRequest;
+import dto.UserProfileResponse;
 import Models.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 import repository.UserRepository;
 import service.UserService;
 import utils.ValidationUtils;
+
+import java.time.LocalDateTime;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -74,6 +77,11 @@ public class UserServiceImpl implements UserService {
         user.setAddress(signupRequest.getAddress());
         user.setPhoneNumber(signupRequest.getPhoneNumber());
         user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
+        
+        // Set memberSince and lastLogin to current time
+        LocalDateTime now = LocalDateTime.now();
+        user.setMemberSince(now);
+        user.setLastLogin(now);
 
         // Save user
         return userRepository.save(user);
@@ -90,10 +98,40 @@ public class UserServiceImpl implements UserService {
                 )
             );
             
+            // Update the lastLogin time for the user
+            User user = userRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new Exception("User not found"));
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+            
             // If authentication was successful, generate a JWT token
             return jwtUtils.generateToken(loginRequest.getEmail());
         } catch (AuthenticationException e) {
             throw new Exception("Invalid email or password");
         }
+    }
+    
+    @Override
+    public UserProfileResponse getUserProfile(String email) throws Exception {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new Exception("User not found"));
+            
+        UserProfileResponse profileResponse = new UserProfileResponse();
+        profileResponse.setId(user.getId());
+        profileResponse.setName(user.getName());
+        profileResponse.setEmail(user.getEmail());
+        profileResponse.setAddress(user.getAddress());
+        profileResponse.setPhoneNumber(user.getPhoneNumber());
+        profileResponse.setJobTitle(user.getJobTitle());
+        profileResponse.setDepartment(user.getDepartment());
+        profileResponse.setCompany(user.getCompany());
+        profileResponse.setLocation(user.getLocation());
+        profileResponse.setBio(user.getBio());
+        profileResponse.setProfilePic(user.getProfilePic());
+        profileResponse.setPlan(user.getPlan());
+        profileResponse.setMemberSince(user.getMemberSince());
+        profileResponse.setLastLogin(user.getLastLogin());
+        
+        return profileResponse;
     }
 }
