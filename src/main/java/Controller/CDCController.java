@@ -72,14 +72,19 @@ public class CDCController {
                     .body("Erreur lors de la suppression du CDC: " + e.getMessage());
         }
     }
-    
+
     @GetMapping("/search")
-    public ResponseEntity<List<CDC>> searchCDCsByTitle(@RequestParam String title) {
-        return ResponseEntity.ok(cdcService.searchCDCsByTitle(title));
+    public ResponseEntity<List<CDC>> searchCDCsByNomProjet(@RequestParam String nomProjet) {
+        return ResponseEntity.ok(cdcService.searchCDCsByNomProjet(nomProjet));
     }
     
-    @GetMapping("/type/{type}")
-    public ResponseEntity<List<CDC>> getCDCsByType(@PathVariable String type) {
-        return ResponseEntity.ok(cdcService.getCDCsByType(type));
-    }
+//    @GetMapping("/search")
+//    public ResponseEntity<List<CDC>> searchCDCsByTitle(@RequestParam String title) {
+//        return ResponseEntity.ok(cdcService.searchCDCsByTitle(title));
+//    }
+//
+//    @GetMapping("/type/{type}")
+//    public ResponseEntity<List<CDC>> getCDCsByType(@PathVariable String type) {
+//        return ResponseEntity.ok(cdcService.getCDCsByType(type));
+//    }
 }

@@ -26,7 +26,7 @@ public class CDC {
     
     @Column(nullable = false)
     private String title;
-    
+
     private String type;
     
     @UpdateTimestamp
@@ -35,10 +35,8 @@ public class CDC {
     
     private String version;
     
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "cdc_contributors", joinColumns = @JoinColumn(name = "cdc_id"))
     @Column(name = "contributor")
-    private List<String> contributors = new ArrayList<>();
+    private String contributors;
     
     @Embedded
     private PageDeGarde pageDeGarde;
@@ -87,10 +85,8 @@ public class CDC {
         @Column(name = "version_document")
         private String versionDocument = "1.0";
         
-        @ElementCollection(fetch = FetchType.EAGER)
-        @CollectionTable(name = "cdc_redacteurs", joinColumns = @JoinColumn(name = "cdc_id"))
         @Column(name = "redacteur")
-        private List<String> redacteurs = new ArrayList<>();
+        private String redacteurs;
     }
     
     @Embeddable

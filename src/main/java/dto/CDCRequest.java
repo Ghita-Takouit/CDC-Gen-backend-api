@@ -14,7 +14,7 @@ public class CDCRequest {
     private String title;
     private String type;
     private String version;
-    private List<String> contributors;
+    private String contributors;
     
     private PageDeGarde pageDeGarde;
     private Introduction introduction;
@@ -35,7 +35,7 @@ public class CDCRequest {
         private String nomClient;
         private LocalDate date;
         private String versionDocument;
-        private List<String> redacteurs;
+        private String redacteurs;
     }
     
     @Data

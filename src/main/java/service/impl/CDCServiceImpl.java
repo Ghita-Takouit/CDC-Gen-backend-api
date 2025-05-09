@@ -23,7 +23,7 @@ public class CDCServiceImpl implements CDCService {
     @Override
     public CDC createCDC(CDCRequest cdcRequest) throws Exception {
         // Validate required fields
-        validateCDCRequest(cdcRequest, true);
+       validateCDCRequest(cdcRequest, true);
 
         // Create new CDC entity
         CDC cdc = new CDC();
@@ -69,31 +69,40 @@ public class CDCServiceImpl implements CDCService {
     }
 
     @Override
-    public List<CDC> searchCDCsByTitle(String title) {
-        if (ValidationUtils.isNullOrEmpty(title)) {
+    public List<CDC> searchCDCsByNomProjet(String nomProjet) {
+        if (ValidationUtils.isNullOrEmpty(nomProjet)) {
             return new ArrayList<>();
         }
-        return cdcRepository.findByTitleContainingIgnoreCase(title);
-    }
+        return cdcRepository.findByTitleContainingIgnoreCase(nomProjet);
+   }
 
-    @Override
-    public List<CDC> getCDCsByType(String type) {
-        if (ValidationUtils.isNullOrEmpty(type)) {
-            return new ArrayList<>();
-        }
-        return cdcRepository.findByType(type);
-    }
+//    @Override
+//    public List<CDC> searchCDCsByTitle(String title) {
+//        if (ValidationUtils.isNullOrEmpty(title)) {
+//            return new ArrayList<>();
+//        }
+//        return cdcRepository.findByTitleContainingIgnoreCase(title);
+//   }
+
+//    @Override
+//    public List<CDC> getCDCsByType(String type) {
+//        if (ValidationUtils.isNullOrEmpty(type)) {
+//            return new ArrayList<>();
+//        }
+//        return cdcRepository.findByType(type);
+//    }
     
-    private void validateCDCRequest(CDCRequest request, boolean isNewCdc) throws Exception {
+    @Override
+    public void validateCDCRequest(CDCRequest request, boolean isNewCdc) throws Exception {
         // Title is required
-        if (ValidationUtils.isNullOrEmpty(request.getTitle())) {
-            throw new Exception("Le titre du CDC est requis");
-        }
-        
+//        if (ValidationUtils.isNullOrEmpty(request.getTitle())) {
+//            throw new Exception("Le titre du CDC est requis");
+//        }
+//
         // Check if title exists on create (not on update)
-        if (isNewCdc && cdcRepository.existsByTitle(request.getTitle())) {
-            throw new Exception("Un CDC avec ce titre existe déjà");
-        }
+//        if (isNewCdc && cdcRepository.existsByTitle(request.getTitle())) {
+//            throw new Exception("Un CDC avec ce titre existe déjà");
+//        }
 
         // Page de garde validations
         if (request.getPageDeGarde() == null) {
@@ -169,12 +178,12 @@ public class CDCServiceImpl implements CDCService {
     }
     
     private void mapRequestToEntity(CDCRequest request, CDC entity) {
-        entity.setTitle(request.getTitle());
+        entity.setTitle(request.getPageDeGarde().getNomProjet());
         entity.setType(request.getType());
         entity.setVersion(request.getVersion());
         
         if (request.getContributors() != null) {
-            entity.setContributors(new ArrayList<>(request.getContributors()));
+            entity.setContributors(request.getContributors());
         }
         
         // Map Page de Garde
@@ -191,7 +200,7 @@ public class CDCServiceImpl implements CDCService {
             pageDeGarde.setVersionDocument(request.getPageDeGarde().getVersionDocument());
             
             if (request.getPageDeGarde().getRedacteurs() != null) {
-                pageDeGarde.setRedacteurs(new ArrayList<>(request.getPageDeGarde().getRedacteurs()));
+                pageDeGarde.setRedacteurs(request.getPageDeGarde().getRedacteurs());
             }
         }
         

@@ -10,6 +10,6 @@ import java.util.UUID;
 @Repository
 public interface CDCRepository extends JpaRepository<CDC, UUID> {
     List<CDC> findByTitleContainingIgnoreCase(String title);
-    List<CDC> findByType(String type);
-    boolean existsByTitle(String title);
+//    List<CDC> findByType(String type);
+//    boolean existsByTitle(String title);
 }

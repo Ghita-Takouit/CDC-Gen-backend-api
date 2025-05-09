@@ -12,6 +12,9 @@ public interface CDCService {
     void deleteCDC(UUID id) throws Exception;
     CDC getCDCById(UUID id) throws Exception;
     List<CDC> getAllCDCs();
-    List<CDC> searchCDCsByTitle(String title);
-    List<CDC> getCDCsByType(String type);
+//    List<CDC> searchCDCsByTitle(String title);
+//    List<CDC> getCDCsByType(String type);
+    List<CDC> searchCDCsByNomProjet(String nomProjet);
+
+    void validateCDCRequest(CDCRequest request, boolean isNewCdc) throws Exception;
 }
