@@ -44,15 +44,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <!-- Google's official Generative AI client -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-vertexai</artifactId>
+            <version>0.7.0</version>
+        </dependency>
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-aiplatform</artifactId>
             <version>3.53.0</version>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-gemini</artifactId>
-            <version>0.26.1</version>
         </dependency>
 
         <dependency>

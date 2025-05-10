@@ -1,12 +1,13 @@
 package service;
 
 import dto.CDCRequest;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.gemini.GeminiChatModel;
+import com.google.cloud.vertexai.api.GenerateContentResponse;
+import com.google.cloud.vertexai.generativeai.ContentMaker;
+import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -15,7 +16,7 @@ import java.util.HashMap;
 public class GeminiAIService {
 
     @Autowired
-    private GeminiChatModel geminiChatModel;
+    private GenerativeModel generativeModel;
     
     @Autowired
     private ObjectMapper objectMapper;
@@ -64,33 +65,36 @@ public class GeminiAIService {
         }
         
         try {
-            SystemMessage systemMessage = SystemMessage.from(
+            String systemInstruction = 
                 "Tu es un expert en rédaction de documents de spécification et cahiers des charges. " +
                 "Ton rôle est d'améliorer et d'enrichir le texte fourni pour le rendre plus professionnel, " +
                 "précis et complet, tout en maintenant le sens original. " +
                 "Assure-toi que ta réponse est bien formatée, avec des paragraphes bien structurés " +
                 "ou des listes à puces lorsque cela est approprié. " +
-                "Ne change jamais radicalement le contenu ou l'intention du texte original."
-            );
+                "Ne change jamais radicalement le contenu ou l'intention du texte original.";
 
-            UserMessage userMessage = UserMessage.from(
+            String userPrompt = 
                 "Voici un texte à améliorer pour un cahier des charges professionnel :\n\n" +
                 prompt + ":\n" + originalText + "\n\n" +
                 "Améliore ce texte pour le rendre plus professionnel tout en conservant son essence. " +
-                "Réponds uniquement avec le texte amélioré, sans introduction ni conclusion."
-            );
+                "Réponds uniquement avec le texte amélioré, sans introduction ni conclusion.";
             
-            String enhancedText = geminiChatModel.generate(List.of(systemMessage, userMessage))
-                .content().text().trim();
+            String fullPrompt = systemInstruction + "\n\n" + userPrompt;
+            
+            // Use the direct generateContent method with ContentMaker
+            GenerateContentResponse response = generativeModel.generateContent(ContentMaker.fromString(fullPrompt));
+            
+            // Extract text from the response
+            String enhancedText = response.getCandidatesList().get(0).getContent().getPartsList().get(0).getText().trim();
             
             return enhancedText;
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("Error calling Gemini API: " + e.getMessage());
             // Return original text if API call fails
             return originalText;
         }
     }
-
+    
     // Individual section enhancement methods
     
     private void enhancePageDeGarde(CDCRequest request) {
@@ -177,7 +181,9 @@ public class GeminiAIService {
         if (annexes != null) {
             annexes.setGlossaire(enhanceText("Glossaire de termes techniques", annexes.getGlossaire()));
             annexes.setDocumentsComplementaires(enhanceText("Documents complémentaires", annexes.getDocumentsComplementaires()));
-            annexes.setReferencesUtiles(enhanceText("Références utiles", annexes.getReferencesUtiles()));
+            if (annexes.getReferencesUtiles() != null) {
+                annexes.setReferencesUtiles(enhanceText("Références utiles", annexes.getReferencesUtiles()));
+            }
         }
     }
 }

@@ -1,20 +1,17 @@
 package service;
 
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.gemini.GeminiChatModel;
+import com.google.cloud.vertexai.api.GenerateContentResponse;
+import com.google.cloud.vertexai.generativeai.ContentMaker;
+import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
 public class GeminiService {
 
-    private final GeminiChatModel geminiChatModel;
+    private final GenerativeModel generativeModel;
 
     /**
      * Generates a simple text completion using Gemini AI.
@@ -23,9 +20,14 @@ public class GeminiService {
      * @return Generated text response
      */
     public String generateText(String prompt) {
-        UserMessage userMessage = UserMessage.from(prompt);
-        AiMessage response = geminiChatModel.generate(userMessage).content();
-        return response.text();
+        try {
+            // Use direct generateContent method with ContentMaker
+            GenerateContentResponse response = generativeModel.generateContent(ContentMaker.fromString(prompt));
+            return response.getCandidatesList().get(0).getContent().getPartsList().get(0).getText();
+        } catch (IOException e) {
+            System.err.println("Error generating text: " + e.getMessage());
+            return "Error generating response: " + e.getMessage();
+        }
     }
 
     /**
@@ -36,10 +38,15 @@ public class GeminiService {
      * @return Generated text response
      */
     public String generateTextWithSystemInstruction(String systemInstruction, String prompt) {
-        SystemMessage systemMessage = SystemMessage.from(systemInstruction);
-        UserMessage userMessage = UserMessage.from(prompt);
-        
-        AiMessage response = geminiChatModel.generate(List.of(systemMessage, userMessage)).content();
-        return response.text();
+        try {
+            String fullPrompt = systemInstruction + "\n\n" + prompt;
+            
+            // Use direct generateContent method with ContentMaker
+            GenerateContentResponse response = generativeModel.generateContent(ContentMaker.fromString(fullPrompt));
+            return response.getCandidatesList().get(0).getContent().getPartsList().get(0).getText();
+        } catch (IOException e) {
+            System.err.println("Error generating text with system instruction: " + e.getMessage());
+            return "Error generating response: " + e.getMessage();
+        }
     }
 }
