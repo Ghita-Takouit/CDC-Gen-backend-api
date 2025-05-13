@@ -9,32 +9,39 @@ pipeline {
     environment {
         MAVEN_OPTS = '-Xmx1024m'
         APP_NAME = 'cdc-gen-backend-api'
-        VERSION = '${BUILD_NUMBER}'
+        VERSION = "${BUILD_NUMBER}"
         
         JWT_SECRET = credentials('cdc-gen-jwt-secret')
         
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('google-vertex-ai-credentials')
+        DOCKER_REGISTRY = 'docker.io'
+        DOCKER_REPOSITORY = 'aeztic/cdc-gen-backend-api'
+        DOCKER_IMAGE = "${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}:${VERSION}"
+        
+        DOCKER_CREDENTIALS = credentials('docker-hub-credentials')
     }
     
     stages {
-        stage('Checkout') {
+        stage('Git Checkout') {
             steps {
-                checkout scm
-                echo 'Code checkout complete'
+                git branch: 'main', changelog: false, credentialsId: 'GithubToken',
+                poll: false, url: 'https://github.com/Ghita-Takouit/CDC-Gen-backend-api.git'
             }
         }
         
         stage('Build') {
             steps {
-                sh 'mvn clean compile'
-                echo 'Build complete'
+                sh 'mvn clean package -DskipTests'
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
             }
         }
         
-        stage('Test') {
+        stage('Unit Tests') {
             steps {
                 sh 'mvn test'
-                echo 'Tests complete'
             }
             post {
                 always {
@@ -43,40 +50,63 @@ pipeline {
             }
         }
         
-        stage('Package') {
+        stage('Code Analysis') {
             steps {
-                sh 'mvn package -DskipTests'
-                echo 'Packaging complete'
+                sh 'mvn verify sonar:sonar -Dsonar.projectKey=CDC-Gen-backend-api -Dsonar.host.url=http://your-sonarqube-server:9000 -Dsonar.login=$SONAR_TOKEN'
             }
         }
         
-        stage('Code Quality') {
+        stage('Build Docker Image') {
             steps {
-                echo 'Running code quality checks'
+                script {
+                    // Create env file with secrets for Docker
+                    sh '''
+                        echo "JWT_SECRET=${JWT_SECRET}" > .env
+                    '''
+                    
+                    // Build Docker image
+                    sh "docker build -t ${DOCKER_IMAGE} ."
+                }
             }
         }
         
-        stage('Archive Artifacts') {
+        stage('Push Docker Image') {
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                script {
+                    sh '''
+                        echo $DOCKER_CREDENTIALS_PSW | docker login -u $DOCKER_CREDENTIALS_USR --password-stdin $DOCKER_REGISTRY
+                        docker push ${DOCKER_IMAGE}
+                        docker tag ${DOCKER_IMAGE} ${DOCKER_REPOSITORY}:latest
+                        docker push ${DOCKER_REPOSITORY}:latest
+                    '''
+                }
             }
         }
         
-        stage('Docker Build') {
+        stage('Deploy to Development') {
             when {
                 branch 'main'
             }
             steps {
-                echo 'Building Docker image'
+                script {
+                    // Update the application in the development environment
+                    sh '''
+                        ssh user@dev-server "cd /opt/cdc-gen && \
+                        docker-compose down && \
+                        docker pull ${DOCKER_IMAGE} && \
+                        export VERSION=${VERSION} && \
+                        docker-compose up -d"
+                    '''
+                }
             }
         }
         
-        stage('Deploy to Dev') {
+        stage('Integration Tests') {
             when {
-                branch 'develop'
+                branch 'main'
             }
             steps {
-                echo 'Deploying to Development environment'
+                sh 'mvn verify -Pintegration-tests'
             }
         }
         
@@ -84,25 +114,43 @@ pipeline {
             when {
                 branch 'main'
             }
+            input {
+                message "Deploy to production?"
+                ok "Yes, let's deploy"
+            }
             steps {
-                timeout(time: 2, unit: 'DAYS') {
-                    input message: 'Approve deployment to production?'
+                script {
+                    // Update the application in production environment
+                    sh '''
+                        ssh user@prod-server "cd /opt/cdc-gen && \
+                        docker-compose down && \
+                        docker pull ${DOCKER_IMAGE} && \
+                        export VERSION=${VERSION} && \
+                        docker-compose up -d"
+                    '''
                 }
-                echo 'Deploying to Production environment'
             }
         }
     }
     
     post {
-        always {
-            echo 'Pipeline execution completed'
-            cleanWs()
-        }
         success {
-            echo 'Pipeline succeeded!'
+            echo 'Build and deployment successful!'
+            // Send notification about successful build
+            mail to: 'team@example.com',
+                 subject: "Success: ${currentBuild.fullDisplayName}",
+                 body: "The build was successful. Check: ${env.BUILD_URL}"
         }
         failure {
-            echo 'Pipeline failed!'
+            echo 'Build or deployment failed!'
+            // Send notification about build failure
+            mail to: 'team@example.com',
+                 subject: "Failed: ${currentBuild.fullDisplayName}",
+                 body: "The build failed. Check: ${env.BUILD_URL}"
+        }
+        always {
+            // Clean up workspace
+            cleanWs()
         }
     }
 }
