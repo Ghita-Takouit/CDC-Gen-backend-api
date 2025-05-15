@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdc-gen-backend-config
+data:
+  database-url: "jdbc:sqlite:/data/database.db"
+  spring.jpa.hibernate.ddl-auto: "update"
+  server.port: "8080"
+  spring.jpa.database-platform: "org.hibernate.community.dialect.SQLiteDialect"
+  logging.level.org.springframework.web: "INFO"
+  logging.level.org.springframework.security: "INFO"
+  spring.main.allow-bean-definition-overriding: "true"

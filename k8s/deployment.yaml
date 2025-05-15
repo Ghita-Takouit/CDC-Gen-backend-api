@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdc-gen-backend
+  labels:
+    app: cdc-gen-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cdc-gen-backend
+  template:
+    metadata:
+      labels:
+        app: cdc-gen-backend
+    spec:
+      containers:
+      - name: cdc-gen-backend
+        image: cdc-gen-backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: cdc-gen-backend-config
+              key: database-url
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: cdc-gen-backend-secrets
+              key: jwt-secret
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 15
