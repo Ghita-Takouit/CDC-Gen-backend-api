@@ -7,7 +7,6 @@ import dto.UserProfileResponse;
 import Models.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -91,7 +90,7 @@ public class UserServiceImpl implements UserService {
     public String authenticateUser(LoginRequest loginRequest) throws Exception {
         try {
             // Use AuthenticationManager to authenticate the user
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                     loginRequest.getEmail(),
                     loginRequest.getPassword()
