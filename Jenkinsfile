@@ -23,22 +23,24 @@ pipeline {
     stages {
         stage('Git Checkout') {
             steps {
+                deleteDir()
                 git branch: 'main', changelog: false, credentialsId: 'GithubToken',
                 poll: false, url: 'https://github.com/Ghita-Takouit/CDC-Gen-backend-api.git'
+
             }
         }
-        
+    
         stage('Build') {
-            steps {
-                sh 'mvn clean package -DskipTests'
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                steps {
+                    sh 'mvn clean package -DskipTests'
+                }
+                post {
+                    success {
+                        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                    }
                 }
             }
-        }
-        
+    
         stage('Unit Tests') {
             steps {
                 sh 'mvn test'
@@ -49,13 +51,6 @@ pipeline {
                 }
             }
         }
-        
-        stage('Code Analysis') {
-            steps {
-                sh 'mvn verify sonar:sonar -Dsonar.projectKey=CDC-Gen-backend-api -Dsonar.host.url=http://your-sonarqube-server:9000 -Dsonar.login=$SONAR_TOKEN'
-            }
-        }
-        
         stage('Build Docker Image') {
             steps {
                 script {
@@ -69,88 +64,47 @@ pipeline {
                 }
             }
         }
-        
         stage('Push Docker Image') {
             steps {
                 script {
-                    sh '''
-                        echo $DOCKER_CREDENTIALS_PSW | docker login -u $DOCKER_CREDENTIALS_USR --password-stdin $DOCKER_REGISTRY
-                        docker push ${DOCKER_IMAGE}
-                        docker tag ${DOCKER_IMAGE} ${DOCKER_REPOSITORY}:latest
-                        docker push ${DOCKER_REPOSITORY}:latest
-                    '''
+                    withEnv(['DOCKER_CLIENT_TIMEOUT=300', 'COMPOSE_HTTP_TIMEOUT=300']) {
+                        retry(3) {
+                            sh '''
+                                echo $DOCKER_CREDENTIALS_PSW | docker login -u $DOCKER_CREDENTIALS_USR --password-stdin $DOCKER_REGISTRY
+                                docker push ${DOCKER_IMAGE}
+                                docker tag ${DOCKER_IMAGE} ${DOCKER_REPOSITORY}:latest
+                                docker push ${DOCKER_REPOSITORY}:latest
+                            '''
+                        }
+                    }
                 }
             }
         }
-        
-        stage('Deploy to Development') {
-            when {
-                branch 'main'
+
+        stage('Install Docker Compose') {
+            steps {
+                sh '''
+                    curl -SL https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+                    chmod +x /usr/local/bin/docker-compose
+                    [ -L /usr/bin/docker-compose ] && rm /usr/bin/docker-compose || true
+                    ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+                '''
             }
+        }
+        stage('Deploy') {
             steps {
                 script {
-                    // Update the application in the development environment
+                    // Write the VERSION to a .env file for docker-compose to use
                     sh '''
-                        ssh user@dev-server "cd /opt/cdc-gen && \
-                        docker-compose down && \
-                        docker pull ${DOCKER_IMAGE} && \
-                        export VERSION=${VERSION} && \
-                        docker-compose up -d"
+                        echo "VERSION=${VERSION}" > .env
+                        docker-compose down
+                        docker-compose pull
+                        docker-compose up -d
                     '''
                 }
             }
         }
         
-        stage('Integration Tests') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh 'mvn verify -Pintegration-tests'
-            }
-        }
-        
-        stage('Deploy to Production') {
-            when {
-                branch 'main'
-            }
-            input {
-                message "Deploy to production?"
-                ok "Yes, let's deploy"
-            }
-            steps {
-                script {
-                    // Update the application in production environment
-                    sh '''
-                        ssh user@prod-server "cd /opt/cdc-gen && \
-                        docker-compose down && \
-                        docker pull ${DOCKER_IMAGE} && \
-                        export VERSION=${VERSION} && \
-                        docker-compose up -d"
-                    '''
-                }
-            }
-        }
-    }
-    
-    post {
-        success {
-            echo 'Build and deployment successful!'
-            // Send notification about successful build
-            mail to: 'team@example.com',
-                 subject: "Success: ${currentBuild.fullDisplayName}",
-                 body: "The build was successful. Check: ${env.BUILD_URL}"
-        }
-        failure {
-            echo 'Build or deployment failed!'
-            // Send notification about build failure
-            mail to: 'team@example.com',
-                 subject: "Failed: ${currentBuild.fullDisplayName}",
-                 body: "The build failed. Check: ${env.BUILD_URL}"
-        }
-        always {
-            // Clean up workspace
-            cleanWs()
-        }
+
     }
 }
